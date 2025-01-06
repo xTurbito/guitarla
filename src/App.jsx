@@ -1,105 +1,113 @@
-import { useState } from "react"
-import Header from "./components/Header"
-import Guitar from "./components/Guitar"
-
+import { useState, useEffect } from "react";
+import Header from "./components/Header";
+import Guitar from "./components/Guitar";
+import { db } from "./data/db";
 
 function App() {
+
+  const initialCart = () => {
+    const localStorageCart = localStorage.getItem('cart')
+    return localStorageCart ? JSON.parse(localStorageCart) : []
+  }
+
+  const [data] = useState(db);
+  const [cart, setCart] = useState(initialCart);
+
+  const MAX_ITEMS = 5;
+  const MIN_ITEMS = 1;
+
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart))
+  }, [cart])
+
+  function addToCart(item) {
+    const itemExists = cart.findIndex((guitar) => guitar.id === item.id);
+    if (itemExists >= 0) {
+      if(cart[itemExists].quantity >= MAX_ITEMS) return
+      const updatedCart = [...cart];
+      updatedCart[itemExists].quantity++;
+      setCart(updatedCart);
+    } else {
+      item.quantity = 1;
+      setCart([...cart, item]);
+    }
+
+
   
-    //State
-    const [] = useState()
+  }
+
+
+  function removeFromCart(id) {
+    setCart(prevCart => prevCart.filter(guitar => guitar.id !== id))
+  }
+
+  function increaseQuantity(id){
+    const updatedCart = cart.map(item => {
+      if(item.id === id && item.quantity < MAX_ITEMS){
+        return {
+          ...item,
+          quantity: item.quantity + 1
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+
+  function decreaseQuantity(id){
+    const updatedCart = cart.map(item => {
+      if(item.id === id && item.quantity > MIN_ITEMS){
+        return {
+          ...item,
+          quantity: item.quantity - 1
+        }
+      }
+      return item
+    })
+    setCart(updatedCart)
+  }
+
+
+  function clearCart(e){
+    setCart([])
+  }
+
+
 
   return (
     <>
-    
-     <Header />
-    <header className="py-5 header">
-        <div className="container-xl">
-            <div className="row justify-content-center justify-content-md-between">
-                <div className="col-8 col-md-3">
-                    <a href="index.html">
-                        <img className="img-fluid" src="./public/img/logo.svg" alt="imagen logo" />
-                    </a>
-                </div>
-                <nav className="col-md-6 a mt-5 d-flex align-items-start justify-content-end">
-                    <div 
-                        className="carrito"
-                    >
-                        <img className="img-fluid" src="./public/img/carrito.png" alt="imagen carrito" />
+      <Header cart={cart} 
+      removeFromCart={removeFromCart}
+      increaseQuantity={increaseQuantity}
+      decreaseQuantity={decreaseQuantity}
+      clearCart={clearCart}
+      />
 
-                        <div id="carrito" className="bg-white p-3">
-                            <p className="text-center">El carrito esta vacio</p>
-                            <table className="w-100 table">
-                                <thead>
-                                    <tr>
-                                        <th>Imagen</th>
-                                        <th>Nombre</th>
-                                        <th>Precio</th>
-                                        <th>Cantidad</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <img className="img-fluid" src="./public/img/guitarra_02.jpg" alt="imagen guitarra" />
-                                        </td>
-                                        <td>SRV</td>
-                                        <td className="fw-bold">
-                                                $299
-                                        </td>
-                                        <td className="flex align-items-start gap-4">
-                                            <button
-                                                type="button"
-                                                className="btn btn-dark"
-                                            >
-                                                -
-                                            </button>
-                                                1
-                                            <button
-                                                type="button"
-                                                className="btn btn-dark"
-                                            >
-                                                +
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <button
-                                                className="btn btn-danger"
-                                                type="button"
-                                            >
-                                                X
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <p className="text-end">Total pagar: <span className="fw-bold">$899</span></p>
-                            <button className="btn btn-dark w-100 mt-3 p-2">Vaciar Carrito</button>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <main className="container-xl mt-5">
+      <main className="container-xl mt-5">
         <h2 className="text-center">Nuestra Colección</h2>
 
         <div className="row mt-5">
-            <Guitar />
+          {data.map((guitar) => (
+            <Guitar
+              key={guitar.id}
+              guitar={guitar}
+              setCart={setCart}
+              addToCart={addToCart}
+            />
+          ))}
         </div>
-    </main>
+      </main>
 
-
-    <footer className="bg-dark mt-5 py-5">
+      <footer className="bg-dark mt-5 py-5">
         <div className="container-xl">
-            <p className="text-white text-center fs-4 mt-4 m-md-0">GuitarLA - Todos los derechos Reservados</p>
+          <p className="text-white text-center fs-4 mt-4 m-md-0">
+            GuitarLA - Todos los derechos Reservados
+          </p>
         </div>
-    </footer>
-
+      </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
